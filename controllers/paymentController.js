@@ -76,7 +76,7 @@ export const paymentVerification = async (req, res) => {
     //await with try and catch, if err res status 400 with err
 
     res.redirect(
-      'http://127.0.0.1:5173/'
+      'http://127.0.0.1:5173/balance'
       // `http://127.0.0.1:5173/paymentsuccess?reference=${razorpay_payment_id}`
     );
   } else {
