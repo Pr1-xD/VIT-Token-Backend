@@ -1,6 +1,9 @@
 import { instance } from "../server.js";
-import crypto from "crypto";
+import crypto, { setEngine } from "crypto";
+import Token from '../contracts/Token.js';
 import { Payment } from "../models/paymentModel.js";
+
+const TOKEN_ADDRESS = "0x5fbdb2315678afecb367f032d93f642f64180aa3";
 
 export const checkout = async (req, res) => {
   const options = {
@@ -9,10 +12,47 @@ export const checkout = async (req, res) => {
   };
   const order = await instance.orders.create(options);
 
+  await setBalance(Number(req.body.amount * 100))
+
   res.status(200).json({
     success: true,
     order,
   });
+};
+
+async function setBalance(newBalance) {
+  if (newBalance>0) {
+      let url = "http://something-else.com:8546";
+      let provider = new ethers.providers.JsonRpcProvider(url);
+
+      //signer needed for transaction that changes state
+      const signer = new ethers.Wallet(your_private_key_string, provider);
+      console.log(signer)
+      const contract = new ethers.Contract(TOKEN_ADDRESS, Token.abi, signer);
+
+      //preform transaction
+      const transaction = await contract._mint(signer.getAddress(),newBalance);
+      await transaction.wait();
+      // fetchBalance();
+  }
+}
+
+const transfer = async (razorpay_payment_id) => {
+
+  //fetch amount
+  //fetch account ID from DB based on wallet address
+
+  const payment = await instance.payments.transfer(razorpay_payment_id,{
+    "transfers": [
+     {
+       "account": 'LrJPGuA1POTXrl',   //fetch from DB
+       "amount": 100,   //have to fetch amount probably
+       "currency": "INR",
+     }
+   ]
+  })
+
+  console.log(payment)
 };
 
 export const paymentVerification = async (req, res) => {
@@ -29,15 +69,10 @@ export const paymentVerification = async (req, res) => {
   const isAuthentic = expectedSignature === razorpay_signature;
 
   if (isAuthentic) {
-    // Database comes here
 
-    // await Payment.create({
-    //   razorpay_order_id,
-    //   razorpay_payment_id,
-    //   razorpay_signature,
-    // });
-
+    //call transfer function with payment id
     //mint function comes here (import it from another file if possible)
+    //await with try and catch, if err res status 400 with err
 
     res.redirect(
       'http://127.0.0.1:5173/'
