@@ -3,6 +3,7 @@ import crypto, { setEngine } from "crypto";
 import Token from '../contracts/Token.js';
 import { ethers } from "ethers";
 import { Payment } from "../models/paymentModel.js";
+import { User } from "../models/userModel.js";
 
 const TOKEN_ADDRESS = "0x5fbdb2315678afecb367f032d93f642f64180aa3";
 
@@ -19,6 +20,53 @@ export const checkout = async (req, res) => {
     success: true,
     order,
   });
+};
+
+export const login = async (req, res) => {
+
+  let userData = await User.findOne({registeration_number:req.body.registeration_number})
+
+  if( userData.security_pin == req.body.security_pin)
+    {
+      res.status(200).json({
+      success: true,
+      userData: userData
+      });
+    }
+   else
+    {
+      res.status(200).json({
+        success: false
+        });
+    } 
+
+};
+
+export const signup = async (req, res) => {
+
+  let userData = new User ({
+    registeration_number: req.body.registeration_number,
+    wallet_address: req.body.wallet_address,
+    private_key: req.body.private_key,
+    security_pin: req.body.security_pin
+  })
+
+  try{
+    const userCreated = await userData.save()
+    console.log(userCreated)
+    res.status(200).json({
+      success: true,
+      userData: userCreated
+      });
+  }
+  catch(err){
+    console.log(err)
+    res.status(500).json({
+      success: false,
+      error: err
+      });
+  }
+
 };
 
 async function setBalance(newBalance) {
