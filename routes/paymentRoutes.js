@@ -12,7 +12,7 @@ router.route("/checkout").post(checkout);
 
 router.route("/paymentverification").post(paymentVerification);
 
-router.route("/login").get(login);
+router.route("/login").post(login);
 
 router.route("/signup").post(signup);
 
