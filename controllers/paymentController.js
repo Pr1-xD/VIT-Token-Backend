@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 import { Payment } from "../models/paymentModel.js";
 import { User } from "../models/userModel.js";
 
-const TOKEN_ADDRESS = "0x5fbdb2315678afecb367f032d93f642f64180aa3";
+const TOKEN_ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
 
 export const checkout = async (req, res) => {
   const options = {
@@ -31,6 +31,42 @@ export const login = async (req, res) => {
       res.status(200).json({
       success: true,
       userData: userData
+      });
+    }
+   else
+    {
+      res.status(200).json({
+        success: false
+        });
+    } 
+
+};
+
+export const transfer = async (req, res) => {
+
+  let userData = await User.findOne({registeration_number:req.body.registeration_number})
+
+  let recieverData = await User.findOne({registeration_number:req.body.rec_registeration_number})
+
+  if( userData.security_pin == req.body.security_pin)
+    {
+      let url = "http://127.0.0.1:8545/";
+      let provider = new ethers.providers.JsonRpcProvider(url);
+
+      //signer needed for transaction that changes state
+      const signer = new ethers.Wallet(userData.private_key, provider);
+      console.log(signer)
+      const contract = new ethers.Contract(TOKEN_ADDRESS, Token.abi, signer);
+
+      //preform transaction
+      console.log(recieverData.wallet_address)
+      const transaction = await contract.transfer(recieverData.wallet_address,req.body.amount);
+      await transaction.wait();
+      console.log(transaction)
+      // fetchBalance();
+
+      res.status(200).json({
+      success: true
       });
     }
    else
@@ -86,23 +122,23 @@ async function setBalance(newBalance) {
   }
 }
 
-const transfer = async (razorpay_payment_id) => {
+// const transfer = async (razorpay_payment_id) => {
 
-  //fetch amount
-  //fetch account ID from DB based on wallet address
+//   //fetch amount
+//   //fetch account ID from DB based on wallet address
 
-  const payment = await instance.payments.transfer(razorpay_payment_id,{
-    "transfers": [
-     {
-       "account": 'LrJPGuA1POTXrl',   //fetch from DB
-       "amount": 100,   //have to fetch amount probably
-       "currency": "INR",
-     }
-   ]
-  })
+//   const payment = await instance.payments.transfer(razorpay_payment_id,{
+//     "transfers": [
+//      {
+//        "account": 'LrJPGuA1POTXrl',   //fetch from DB
+//        "amount": 100,   //have to fetch amount probably
+//        "currency": "INR",
+//      }
+//    ]
+//   })
 
-  console.log(payment)
-};
+//   console.log(payment)
+// };
 
 export const paymentVerification = async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =

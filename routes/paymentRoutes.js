@@ -3,7 +3,8 @@ import {
   checkout,
   paymentVerification,
   login,
-  signup
+  signup,
+  transfer
 } from "../controllers/paymentController.js";
 
 const router = express.Router();
@@ -15,5 +16,7 @@ router.route("/paymentverification").post(paymentVerification);
 router.route("/login").post(login);
 
 router.route("/signup").post(signup);
+
+router.route("/transfer").post(transfer);
 
 export default router;
