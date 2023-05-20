@@ -2,9 +2,11 @@ import { instance } from "../server.js";
 import crypto, { setEngine } from "crypto";
 import Token from '../contracts/Token.js';
 import { ethers } from "ethers";
+import { getLeaf,getProof,verify } from "./merkle.js";
 
 import { Transfer } from "../models/transferModel.js";
 import { User } from "../models/userModel.js";
+import { Promo } from "../models/promoModel.js";
 
 const TOKEN_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
@@ -80,6 +82,14 @@ export const transfer = async (req, res) => {
 
   if( userData.security_pin == req.body.security_pin)
     {
+
+      let promoCheck = await Promo.findOne({wallet_address:userData.wallet_address})
+      if(promoCheck)
+      {
+        console.log("Promo available")
+        await giveCashback(userData.wallet_address,req.body.amount)
+      }
+
       try{
         let url = "http://127.0.0.1:8545/";
       let provider = new ethers.providers.JsonRpcProvider(url);
@@ -127,6 +137,28 @@ export const transfer = async (req, res) => {
 
 };
 
+async function giveCashback(walletAddress,amount){
+  const leaf = await getLeaf(walletAddress)
+  const proof = await getProof(leaf)
+  const root = await getRoot()
+  if(walletAddress)
+  { 
+    console.log("minting")
+    let url = "http://127.0.0.1:8545/";
+      let provider = new ethers.providers.JsonRpcProvider(url);
+
+      //signer needed for transaction that changes state
+      const signer = new ethers.Wallet('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80', provider);
+      console.log(signer)
+      const contract = new ethers.Contract(TOKEN_ADDRESS, Token.abi, signer);
+
+      //preform transaction
+      const transaction = await contract._mint(walletAddress,amount*0.1);
+      await transaction.wait();
+      console.log(transaction.body)
+  }
+}
+
 export const signup = async (req, res) => {
 
   let userData = new User ({
@@ -171,7 +203,51 @@ export const signup = async (req, res) => {
 
 };
 
+export const addPromo = async (req, res) => {
 
+  try{
+    let promoData = new Promo ({
+    wallet_address: req.body.wallet_address,
+    amount: req.body.amount
+  })
+    const promoCreated = await promoData.save()
+    console.log(promoCreated)
+    res.status(200).json({
+      success: true,
+      data: promoCreated
+      });
+  }
+  catch(err){
+    console.log(err)
+    res.status(500).json({
+      success: false,
+      error: err
+      });
+  }
+
+};
+
+
+
+const getRoot = async () => {
+      let url = "http://127.0.0.1:8545/";
+      let provider = new ethers.providers.JsonRpcProvider(url);
+
+      //signer needed for transaction that changes state
+      const signer = new ethers.Wallet('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80', provider);
+      console.log(signer)
+      const contract = new ethers.Contract(TOKEN_ADDRESS, Token.abi, signer);
+
+      try {
+        let data = await contract.root();
+
+        console.log("root:"+data)
+        return data
+
+    } catch (e) {
+        console.log("Err: ", e)
+    }
+  }
 
 export const getBalance = async (req, res) => {
   if (req.params.address) {

@@ -14,7 +14,10 @@
     "dotenv": "^16.0.1",
     "ethers": "5.4",
     "express": "^4.18.1",
+    "keccak256": "^1.0.6",
+    "merkletreejs": "^0.3.10",
     "mongoose": "^6.4.2",
-    "razorpay": "^2.8.2"
+    "razorpay": "^2.8.2",
+    "web3-eth-abi": "^1.10.0"
   }
 }

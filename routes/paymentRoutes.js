@@ -7,7 +7,8 @@ import {
   transfer,
   getBalance,
   getTransfer,
-  getWallet
+  getWallet,
+  addPromo
 } from "../controllers/paymentController.js";
 
 const router = express.Router();
@@ -21,6 +22,8 @@ router.route("/login").post(login);
 router.route("/signup").post(signup);
 
 router.route("/transfer").post(transfer);
+
+router.route("/addpromo").post(addPromo);
 
 router.route("/balance/:address").get(getBalance);
 
