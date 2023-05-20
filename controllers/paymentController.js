@@ -9,19 +9,38 @@ import { User } from "../models/userModel.js";
 const TOKEN_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
 export const checkout = async (req, res) => {
+  console.log(req)
   const options = {
     amount: Number(req.body.amount * 100),
     currency: "INR",
   };
   const order = await instance.orders.create(options);
 
-  await setBalance(Number(req.body.amount * 100))
+  await setBalance(req.body.walletAddress,Number(req.body.amount ))
 
   res.status(200).json({
     success: true,
     order,
   });
 };
+
+async function setBalance(walletAddress,newBalance) {
+  if (newBalance>0) {
+      let url = "http://127.0.0.1:8545/";
+      let provider = new ethers.providers.JsonRpcProvider(url);
+
+      //signer needed for transaction that changes state
+      const signer = new ethers.Wallet('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80', provider);
+      console.log(signer)
+      const contract = new ethers.Contract(TOKEN_ADDRESS, Token.abi, signer);
+
+      //preform transaction
+      const transaction = await contract._mint(walletAddress,newBalance);
+      await transaction.wait();
+      console.log(transaction.body)
+      // fetchBalance();
+  }
+}
 
 export const login = async (req, res) => {
 
@@ -83,7 +102,7 @@ export const transfer = async (req, res) => {
         amount: req.body.amount
       })
 
-      const txAdded = txData.save()
+      const txAdded = await txData.save()
       console.log(txAdded)
 
       res.status(200).json({
@@ -152,22 +171,7 @@ export const signup = async (req, res) => {
 
 };
 
-async function setBalance(newBalance) {
-  if (newBalance>0) {
-      let url = "http://127.0.0.1:8545/";
-      let provider = new ethers.providers.JsonRpcProvider(url);
 
-      //signer needed for transaction that changes state
-      const signer = new ethers.Wallet('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80', provider);
-      console.log(signer)
-      const contract = new ethers.Contract(TOKEN_ADDRESS, Token.abi, signer);
-
-      //preform transaction
-      const transaction = await contract._mint(signer.getAddress(),newBalance);
-      await transaction.wait();
-      // fetchBalance();
-  }
-}
 
 export const getBalance = async (req, res) => {
   if (req.params.address) {
@@ -196,13 +200,27 @@ export const getBalance = async (req, res) => {
 }
 
 export const getTransfer = async (req, res) => {
-  if (req.params.address) {
-      let txData = await Transfer.find({$or:[{registeration_number:req.params.address},{rec_registeration_number:req.params.address}]})
+  if (req.params.regNum) {
+      let txData = await Transfer.find({$or:[{registeration_number:req.params.regNum},{rec_registeration_number:req.params.regNum}]})
        if(txData)
        {
         res.status(200).json({
           success: true,
           txData: txData
+          });
+       }
+  }
+}
+
+export const getWallet = async (req, res) => {
+  if (req.params.regNum) {
+      let userData = await User.find({registeration_number:req.params.regNum})
+      console.log(userData)
+       if(userData)
+       {
+        res.status(200).json({
+          success: true,
+          data: userData
           });
        }
   }
@@ -246,7 +264,7 @@ export const paymentVerification = async (req, res) => {
     //await with try and catch, if err res status 400 with err
 
     res.redirect(
-      'http://127.0.0.1:5173/balance'
+      'http://127.0.0.1:5173/addbalance'
       // `http://127.0.0.1:5173/paymentsuccess?reference=${razorpay_payment_id}`
     );
   } else {
