@@ -108,6 +108,23 @@ export const signup = async (req, res) => {
   })
 
   try{
+
+    let url = "http://127.0.0.1:8545/";
+      let provider = new ethers.providers.JsonRpcProvider(url);
+
+      //signer needed for transaction that changes state
+      const signer = new ethers.Wallet('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80', provider);
+      console.log(signer)
+
+      let tx = {
+        to: req.body.wallet_address,
+        // Convert currency unit from ether to wei
+        value: ethers.utils.parseEther('1')
+    }
+    // Send a transaction
+    signer.sendTransaction(tx)
+    .then((txObj) => {console.log('txHash', txObj.hash)})
+
     const userCreated = await userData.save()
     console.log(userCreated)
     res.status(200).json({
