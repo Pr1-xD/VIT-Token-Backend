@@ -4,7 +4,8 @@ import {
   paymentVerification,
   login,
   signup,
-  transfer
+  transfer,
+  getBalance
 } from "../controllers/paymentController.js";
 
 const router = express.Router();
@@ -18,5 +19,7 @@ router.route("/login").post(login);
 router.route("/signup").post(signup);
 
 router.route("/transfer").post(transfer);
+
+router.route("/balance/:address").get(getBalance);
 
 export default router;
