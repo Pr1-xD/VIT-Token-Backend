@@ -2,7 +2,8 @@ import { instance } from "../server.js";
 import crypto, { setEngine } from "crypto";
 import Token from '../contracts/Token.js';
 import { ethers } from "ethers";
-import { Payment } from "../models/paymentModel.js";
+
+import { Transfer } from "../models/transferModel.js";
 import { User } from "../models/userModel.js";
 
 const TOKEN_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
@@ -75,6 +76,15 @@ export const transfer = async (req, res) => {
       await transaction.wait();
       console.log(transaction)
       // fetchBalance();
+
+      let txData = new Transfer({
+        registeration_number: req.body.registeration_number,
+        rec_registeration_number: req.body.rec_registeration_number,
+        amount: req.body.amount
+      })
+
+      const txAdded = txData.save()
+      console.log(txAdded)
 
       res.status(200).json({
       success: true
@@ -182,6 +192,19 @@ export const getBalance = async (req, res) => {
     } catch (e) {
         console.log("Err: ", e)
     }
+  }
+}
+
+export const getTransfer = async (req, res) => {
+  if (req.params.address) {
+      let txData = await Transfer.find({$or:[{registeration_number:req.params.address},{rec_registeration_number:req.params.address}]})
+       if(txData)
+       {
+        res.status(200).json({
+          success: true,
+          txData: txData
+          });
+       }
   }
 }
 

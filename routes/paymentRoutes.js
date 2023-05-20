@@ -5,7 +5,8 @@ import {
   login,
   signup,
   transfer,
-  getBalance
+  getBalance,
+  getTransfer
 } from "../controllers/paymentController.js";
 
 const router = express.Router();
@@ -21,5 +22,7 @@ router.route("/signup").post(signup);
 router.route("/transfer").post(transfer);
 
 router.route("/balance/:address").get(getBalance);
+
+router.route("/gettransfers/:address").get(getTransfer);
 
 export default router;
